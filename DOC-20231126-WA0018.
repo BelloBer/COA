@@ -1,0 +1,782 @@
+#-------------------------------------------------------------------------------
+#@authors: Digital Architechts
+#@purpose:Simulation of Machobane Farming System in Lesotho
+#@submission date:21 November 2023
+#@assignment number:1
+#------------------------------------------------------------------------------
+
+.data
+    .space 8192               # Allocate space for data segment
+     intercrop_buffer_size: .word 256
+      relaycrop_buffer_size: .word 256
+     
+
+    # Strings
+    #winter:	.asciiz "winter"
+    winter_str: .asciiz "winter"
+    summer_str: .asciiz "summer"
+    spring_str: .asciiz "spring"
+    autumn_str: .asciiz "autumn"
+    maize:     .asciiz "maize"
+    beans:     .asciiz "beans"
+    pumkin:    .asciiz "pumpkin"
+    sorghum:   .asciiz "sorghum"
+    watermelon: .asciiz "watermelon"
+    groundnuts: .asciiz "groundnuts"
+    wheat:      .asciiz "wheat"
+    peas:       .asciiz "peas"
+    potatoes:   .asciiz "potatoes"
+    intercrop_prompt2: .asciiz "Enter 2 crops: "
+    intercrop_msg: .asciiz "\n.....intercropping....: "
+    intercrop_complete_msg: .asciiz "\n....intercropping complete.....\n"
+    planting_msg: .asciiz "\n growing....\n harvest time:November-December\n"
+    
+    # Strings for prompts
+    inter_relay_cropping_prompt: .asciiz "INTERCROPPING AND RELAY CROPPING SYSTEM "
+    menu_prompt: .asciiz "push zero to exit\n1. Intercrop\n2. Relay crop\n3. Water crops\n4. Fertilize crop\n5. Plant\n6. Calculate yield\n"
+    fertility_prompt: .asciiz "\nEnter fertility level: 0 for low, 1 for high\n"
+    moisture_prompt: .asciiz "Enter moisture level: 0 for low, 1 for high\n"
+    intercrop_prompt: .asciiz "Is it intercropped? 0 for no, 1 for yes\n"
+    crop_number_prompt: .asciiz "\nEnter the crop number whose yield you want to calculate.\n1. Maize\n2. Beans\n3. Pumpkin\n4. Sorghum\n5. Watermelon\n6. Groundnuts\n7. Wheat\n8. Peas\n9. Potatoes\n"
+    relaycrop_prompt: .asciiz "Enter crop: "    
+     relaycrop_growing_msg: .asciiz "Growing,Harvest time:November-December"
+     relaycrop_complete_msg: .asciiz "Relay Cropping done."
+     moisturize_prompt: .asciiz "Do you want to keep moisturizing? (y/n): "
+     watering_msg: .asciiz "Watering..."
+     out_of_bound_msg: .asciiz "The moisture level is out of bounds."
+     season_prompt: .asciiz "Enter season (winter, summer, spring, autumn): "
+     unknown_season_msg: .asciiz "Unknown season."
+     winter_msg: .asciiz "It's winter."
+     summer_msg: .asciiz "It's summer."
+     spring_msg: .asciiz "It's spring."
+     autumn_msg: .asciiz "It's autumn."
+     fertilize_prompt: .asciiz "Do you want to keep fertilizing? (y/n): "
+     fertilizing_msg: .asciiz "Fertilizing..."
+    
+     # Arrays
+    plot:      .space 8       # Assuming each plot is a string
+    plot1:      .space 256   # Assuming each plot can have a name with a maximum length of 255 characters
+    plot2:      .space 256
+    intercrop_buffer: .space 256
+    relaycrop_buffer: .space 256
+    season_buffer: .space 256 
+
+    # Integers
+    growthTime: .double 0
+    harvestTime: .double 0
+    fertility: .double 0
+    moisture: .double 0
+    FertilityFactor: .double 1.2
+    Moisturefactor: .double 1.3
+    intercropfactor: .double 1.1
+    expected_yield: .double 10.0
+    
+    .text
+    .globl main
+    main:
+    
+    
+    # Display inter_relay_cropping_prompt
+    li $v0, 4
+    la $a0, inter_relay_cropping_prompt
+    syscall
+
+    # Display menu_prompt
+    li $v0, 4
+    la $a0, menu_prompt
+    syscall
+
+    # Get user input for choice
+    li $v0, 5
+    syscall
+    move $t0, $v0
+
+menu_loop:
+    beq $t0, 0, exit_program
+    beq $t0, 1, intercrop
+    beq $t0, 2, relaycrop
+    beq $t0, 3, water_crops
+    beq $t0, 4, fertilize_crop
+    beq $t0, 5, plant
+    beq $t0, 6, calculate_yield
+
+    # Invalid choice, display menu_prompt again
+    li $v0, 4
+    la $a0, menu_prompt
+    syscall
+
+    # Get user input for choice
+    li $v0, 5
+    syscall
+    move $t0, $v0
+    j menu_loop
+
+
+    # Assume that display_intercrop will print the intercropping messages
+intercrop:
+    # Call display_intercrop function
+    jal display_intercrop
+    j menu_loop
+        
+ relaycrop:
+    # Call display_relaycrop function
+    jal display_relaycrop
+    j menu_loop
+
+water_crops:
+    # Call WateringAndMoisturizing function
+    jal WateringAndMoisturizing
+    j menu_loop
+
+fertilize_crop:
+    # Call fertilizing function
+    jal fertilizing
+    j menu_loop
+
+plant:
+    # Call display_plant function
+    jal display_plant
+    j menu_loop
+
+calculate_yield_option:
+    # Call calculate_yield function
+    jal calculate_yield
+    j menu_loop           
+                
+                    
+                        
+ 
+ 
+ #MAIN FUNCTIONSSSJKAJJGG
+ #YGYHHGG
+ #HGHGHGHG
+ 
+ # Assume that display_intercrop will print the intercropping messages
+display_intercrop:
+    # Display intercrop_prompt
+    li $v0, 4
+    la $a0, intercrop_prompt
+    syscall
+
+    # Read input for crop1
+    li $v0, 8
+    la $a0, plot1
+    lw $a1, intercrop_buffer_size
+    syscall
+
+    # Read input for crop2
+    li $v0, 8
+    la $a0, plot2
+    lw $a1, intercrop_buffer_size
+    syscall
+
+    # Display intercrop_msg
+    li $v0, 4
+    la $a0, intercrop_buffer
+    la $a1, plot1
+    syscall
+
+    # Display crop1 growing message
+    li $v0, 4
+    la $a0, plot1
+    syscall
+    li $v0, 4
+    la $a0, planting_msg
+    syscall
+
+    # Display crop2 growing message
+    li $v0, 4
+    la $a0, plot2
+    syscall
+    li $v0, 4
+    la $a0, planting_msg
+    syscall
+
+    # Display intercrop_complete_msg
+    li $v0, 4
+    la $a0, intercrop_complete_msg
+    syscall
+
+    # Return from the function
+    jr $ra
+ 
+ 
+    # Assume that display_relaycrop will print the relay cropping messages
+display_relaycrop:
+    # Display relaycrop_prompt
+    li $v0, 4
+    la $a0, relaycrop_prompt
+    syscall
+
+    # Read input for relaycrop
+    li $v0, 8
+    la $a0, relaycrop_buffer
+    lw $a1, relaycrop_buffer_size
+    syscall
+
+    # Display relaycrop_msg
+    li $v0, 4
+    la $a0, relaycrop_buffer
+    syscall
+
+    # Display relaycrop growing message
+    li $v0, 4
+    la $a0, relaycrop_growing_msg
+    syscall
+
+    # Display relaycrop_complete_msg
+    li $v0, 4
+    la $a0, relaycrop_complete_msg
+    syscall
+
+    # Return from the function
+    jr $ra 
+
+
+WateringAndMoisturizing:
+    # Display moisturize_prompt
+    li $v0, 4
+    la $a0, moisturize_prompt
+    syscall
+
+    # Read input for moisturize
+    li $v0, 12
+    syscall
+    move $s0, $v0   # Store the result in $s0
+
+    # Check if moisture is within bounds (0 and 1)
+    blt $s0, $zero, out_of_bound   # Branch if less than zero
+    bgt $s0, $t1, out_of_bound     # Branch if greater than 1
+
+    # Display watering message
+    beqz $s0, no_watering
+    li $v0, 4
+    la $a0, watering_msg
+    syscall
+
+    no_watering:
+    # Return from the function
+    jr $ra
+
+    out_of_bound:
+    # Display out_of_bound message
+    li $v0, 4
+    la $a0, out_of_bound_msg
+    syscall
+
+    # Return from the function
+    jr $ra
+
+# Assume that display_plant will print the plant messages
+display_plant:
+    # Display season_prompt
+    li $v0, 4
+    la $a0, season_prompt
+    syscall
+
+    # Read input for season
+    li $v0, 8
+    la $a0, season_buffer
+    li $a1, 256  # Assuming a buffer size of 256 characters
+    syscall
+
+    # Compare the entered season with predefined strings
+    la $t0, winter_str
+    la $t1, summer_str
+    la $t2, spring_str
+    la $t3, autumn_str
+
+    # Check if the entered season matches any predefined season
+    beq $a0, $t0, winter
+    beq $a0, $t1, summer
+    beq $a0, $t2, spring
+    beq $a0, $t3, autumn
+
+    # Default case if the entered season is not recognized
+    li $v0, 4
+    la $a0, unknown_season_msg
+    syscall
+    j end_display_plant
+
+    winter:
+    # Display winter message
+    li $v0, 4
+    la $a0, winter_msg
+    syscall
+    j end_display_plant
+
+    summer:
+    # Display summer message
+    li $v0, 4
+    la $a0, summer_msg
+    syscall
+    j end_display_plant
+
+    spring:
+    # Display spring message
+    li $v0, 4
+    la $a0, spring_msg
+    syscall
+    j end_display_plant
+
+    autumn:
+    # Display autumn message
+    li $v0, 4
+    la $a0, autumn_msg
+    syscall
+
+    end_display_plant:
+    # Return from the function
+    jr $ra
+
+
+# Assume that fertilizing will print fertilizing messages
+fertilizing:
+    # Display fertilize_prompt
+    li $v0, 4
+    la $a0, fertilize_prompt
+    syscall
+
+    # Read input for fertilize
+    li $v0, 12
+    syscall
+    move $s0, $v0   # Store the result in $s0
+
+    # Check if fertility is within bounds (0 and 1)
+    blt $s0, $zero, out_of_bound   # Branch if less than zero
+    bgt $s0, 1, out_of_bound        # Branch if greater than 1
+
+    # Display fertilizing message
+    beqz $s0, no_fertilizing
+    li $v0, 4
+    la $a0, fertilizing_msg
+    syscall
+
+    no_fertilizing:
+    # Return from the function
+    jr $ra
+
+    out_of_bound1:
+    # Display out_of_bound message
+    li $v0, 4
+    la $a0, out_of_bound_msg
+    syscall
+
+    # Return from the function
+    jr $ra
+    
+    
+    
+calculate_yield:
+    # Display fertility_prompt
+    li $v0, 4
+    la $a0, fertility_prompt
+    syscall
+
+    # Read input for fertility
+    li $v0, 5
+    syscall
+    move $s0, $v0   # Store the result in $s0
+
+    # Display moisture_prompt
+    li $v0, 4
+    la $a0, moisture_prompt
+    syscall
+
+    # Read input for moisture
+    li $v0, 5
+    syscall
+    move $s1, $v0   # Store the result in $s1
+
+    # Display intercropped_prompt
+    li $v0, 4
+    la $a0, intercrop_prompt
+    syscall
+
+    # Read input for intercropped
+    li $v0, 5
+    syscall
+    move $s2, $v0   # Store the result in $s2
+
+    # Call the appropriate yield function based on the user's choice
+    li $v0, 4
+    la $a0, crop_number_prompt
+    syscall
+
+    # Read input for crop_choice
+    li $v0, 5
+    syscall
+    move $s3, $v0   # Store the result in $s3
+
+    # Call the appropriate yield function based on the user's choice
+   
+    beq $s3, 1, calculate_maize_yield
+    beq $s3, 2, calculate_beans_yield
+    beq $s3, 3, calculate_pumpkin_yield
+    beq $s3, 4, calculate_sorghum_yield
+    beq $s3, 5, calculate_watermelon_yield
+    beq $s3, 6, calculate_groundnuts_yield
+    beq $s3, 7, calculate_wheat_yield
+    beq $s3, 8, calculate_peas_yield
+    beq $s3, 9, calculate_potatoes_yield
+    
+
+    j end_calculate_yield
+
+calculate_maize_yield:
+    j end_calculate_yield
+
+calculate_beans_yield:
+      j end_calculate_yield
+
+calculate_pumpkin_yield:
+      j end_calculate_yield
+    
+calculate_sorghum_yield:
+    j end_calculate_yield
+    
+calculate_watermelon_yield:
+   j end_calculate_yield
+    
+calculate_groundnuts_yield:
+    j end_calculate_yield
+
+calculate_wheat_yield:
+    j end_calculate_yield
+
+
+
+end_calculate_yield:
+    # Return from the function
+    jr $ra
+
+ calculate_peas_yield:
+    j end_calculate_yield
+    
+calculate_potatoes_yield:
+    j end_calculate_yield
+
+#--------------------------------------------------------------------------
+
+#=======Calculate Yield===========    
+
+   #MAIZE
+maizeyield:
+    # Load double values from memory
+    l.d $f6, expected_yield    # Load expected_yield
+    l.d $f8, FertilityFactor   # Load FertilityFactor
+    l.d $f10, Moisturefactor   # Load Moisturefactor
+    l.d $f12, intercropfactor  # Load intercropfactor
+
+    # Check if fertility is zero
+    c.eq.d $f8, $f0
+    bc1t low_fertility   # Branch if true (fertility is zero)
+
+    # Check if moisture is zero
+    c.eq.d $f10, $f0
+    bc1t low_fertility_low_moisture   # Branch if true (moisture is zero)
+
+    # Both fertility and moisture are high
+    mul.d $f14, $f6, $f8  # expected_yield * FertilityFactor
+    mul.d $f16, $f14, $f10 # expected_yield * FertilityFactor * MoistureFactor
+    j after_calculation
+
+low_fertility:
+    # Low fertility
+    c.eq.d $f10, $f0
+    bc1t low_fertility_low_moisture  # Branch if true (moisture is zero)
+
+    mul.d $f14, $f6, $f10  # expected_yield * MoistureFactor
+    j after_calculation
+
+low_fertility_low_moisture:
+    # Both low fertility and low moisture
+    mov.d $f16, $f6  # expected_yield
+    j after_calculation
+
+after_calculation:
+    # Check if intercropped
+    bnez $s0, is_intercropped  # Branch if intercropped is true
+    j not_intercropped
+
+is_intercropped:
+    mul.d $f16, $f16, $f12  # totalyield = totalyield * intercropfactor
+
+not_intercropped:
+    # Return the result
+    mov.d $f0, $f16  # Move the result to $f0
+    jr $ra  # Return from the function
+
+   li $v0, 2
+   syscall
+ 
+ 
+beans_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercroppedb:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+    
+#pumpkin
+
+pumpkin_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercropped_pumpkin:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+
+#sorghum
+
+sorghum_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercropped_sorghum:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+
+#watermelon
+
+watermelon_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercropped_watermelon:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+
+#groundnuts
+
+groundnuts_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercroppedg:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+
+#wheat
+
+wheat_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercropped_wheat:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+
+#peas
+
+peas_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercropped_peas:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+
+#potatoes
+ 
+ potatoes_yield:
+    # Load the factors into floating-point registers
+    l.d $f1, FertilityFactor
+    l.d $f2, Moisturefactor
+    l.d $f3, intercropfactor
+
+    # Load inputs into floating-point registers
+    mtc1 $a0, $f4  # Fertility
+    mtc1 $a1, $f5  # Moisture
+    mtc1 $a2, $f6  # Intercropped (boolean, 0 or 1)
+
+    # Perform the calculation
+    mul.d $f7, $f4, $f1    # Fertility * FertilityFactor
+    mul.d $f8, $f5, $f2    # Moisture * MoistureFactor
+    mul.d $f9, $f7, $f8    # Fertility * FertilityFactor * Moisture * MoistureFactor
+
+    # Convert Intercropped to an integer in $t0
+    cvt.w.s $f6, $f6
+    mfc1 $t0, $f6
+
+    # Check if intercropped
+    beqz $t0, not_intercropped   # Branch if not intercropped
+    mul.d $f9, $f9, $f3         # Multiply by IntercropFactor for intercropped crops
+
+not_intercroppedpo:
+    # Store the result in $f0
+    mov.s $f0, $f9
+
+    # Return from the function
+    jr $ra
+ 
+#---------------------------------------------------
+ 
+ exit_program:
+ 		li $v0, 10
+    		syscall                            
+                                
+            
