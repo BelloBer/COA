@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MIPS Assembly IDE</title>
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #191d24; /* Vibrant dark blue background */
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            background-color: #24292e;
+            color: #fff;
+            padding: 10px;
+            width: 90%;
+        }
+
+        .toolbar button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            background-color: #0366d6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .editor {
+            flex: 1;
+            padding: 20px;
+            background-color: #24292e;
+            color: #fff;
+            width: 90%;
+            margin-top: 10px;
+        }
+
+        .editor textarea, .terminal textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            background-color: #2f363d;
+            color: #fff;
+            border: 1px solid #ccc;
+            resize: none;
+        }
+
+        .CONTAINER {
+            display: flex;
+            width: 90%;
+            justify-content: center;
+        }
+
+        .terminal {
+            width: 45%;
+            background-color: #24292e;
+            color: #fff;
+            margin-top: 10px;
+			 margin-right: 10px;
+        }
+
+        .registers {
+		    display:flex;
+            width: 50%;
+            padding: 2px;
+            background-color: #2f363d;
+            color: #fff;
+            margin-top: 10px;
+			justify-content:center;
+        }
+
+        /* Add media query for responsiveness */
+        @media (max-width: 768px) {
+            .CONTAINER {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .terminal,
+            .registers {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+  
+
+        .terminal p {
+            margin-bottom: 5px;
+        }
+
+       
+
+        .registers table {
+            width: 50%;
+            border-collapse: collapse;
+        }
+
+        .registers th, .registers td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+
+        .registers th {
+            background-color: #24292e;
+        }
+
+        .registers td {
+            background-color: #2f363d;
+        }
+
+       
+		
+		.terminal button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            background-color: #0366d6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+			margin-bottom: 5px;
+        }
+    </style>
+  
+</head>
+<body>
+    <div class="toolbar">
+        <!-- Buttons for your toolbar -->
+		
+        <div>
+            <button onclick="fileButtonClick()">File</button>
+            <button onclick="runButtonClick()">Run</button>
+            <button onclick="settingsButtonClick()">Settings</button>
+            <button onclick="optionsButtonClick()">Options</button>
+            <button onclick="moreButtonClick()">More</button>
+        </div>
+        <div>
+            <button>Save</button>
+            <button>Load</button>
+        </div>
+    </div>
+
+    <div class="editor">
+        <textarea placeholder="Write MIPS assembly code here..."></textarea>
+    </div>
+
+   <div class="CONTAINER">
+        <div class="terminal">
+            <p>MIPS Message:</p>
+			<button>CLEAR</button>
+            <textarea id="terminalOutput" readonly></textarea>
+        </div>
+
+
+        <div class="registers">
+            <table>
+                <!-- Display registers here -->
+				 <tr>
+                <th>Register</th>
+                <th>Value</th>
+            </tr>
+            <!-- Display all 32-bit registers here -->
+            <tr>
+                <td>$zero</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$at</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$v0</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$v1</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$a0</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$a1</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$a2</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$a3</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t0</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t1</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t2</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t3</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t4</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t5</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t6</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t7</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s0</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s1</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s2</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s3</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s4</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s5</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s6</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$s7</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t8</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$t9</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$k0</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$k1</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$gp</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$sp</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$fp</td>
+                <td>0x00000000</td>
+            </tr>
+            <tr>
+                <td>$ra</td>
+                <td>0x00000000</td>
+            </tr>
+            <!-- Add more rows for other registers if needed -->
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function assembleMIPS() {
+            const assemblyCode = document.querySelector('.editor textarea').value;
+            // Simulated assembly - replace this with your actual assembly logic
+            const assembledCode = simulateAssembly(assemblyCode);
+            displayInTerminal(assembledCode);
+        }
+
+        function simulateAssembly(code) {
+            // Simulated assembly process - replace this with actual assembly logic
+            // Here, you might parse the code and simulate assembling MIPS instructions
+            return `Assembled MIPS code:\n${code}`;
+        }
+
+        function displayInTerminal(output) {
+            const terminalOutput = document.getElementById('terminalOutput');
+            terminalOutput.value = output;
+        }
+
+        const runButton = document.querySelector('.toolbar button:nth-child(2)');
+        runButton.addEventListener('click', assembleMIPS);
+		 <script>
+        function fileButtonClick() {
+            // Placeholder functionality for File button
+            alert('File button clicked! Placeholder functionality.');
+        }
+
+        function runButtonClick() {
+            // Placeholder functionality for Run button
+            assembleMIPS(); // Runs assembly function for demonstration
+        }
+
+        function settingsButtonClick() {
+            // Placeholder functionality for Settings button
+            alert('Settings button clicked! Placeholder functionality.');
+        }
+
+        function optionsButtonClick() {
+            // Placeholder functionality for Options button
+            alert('Options button clicked! Placeholder functionality.');
+        }
+
+        function moreButtonClick() {
+            // Placeholder functionality for More button
+            alert('More button clicked! Placeholder functionality.');
+        }
+
+        function saveButtonClick() {
+            // Placeholder functionality for Save button
+            alert('Save button clicked! Placeholder functionality.');
+        }
+
+        function loadButtonClick() {
+            // Placeholder functionality for Load button
+            alert('Load button clicked! Placeholder functionality.');
+        }
+
+        // This section includes your existing MIPS assembly functionality
+        function assembleMIPS() {
+            const assemblyCode = document.querySelector('.editor textarea').value;
+            // Simulated assembly - replace this with your actual assembly logic
+            const assembledCode = simulateAssembly(assemblyCode);
+            displayInTerminal(assembledCode);
+        }
+
+        function simulateAssembly(code) {
+            // Simulated assembly process - replace this with actual assembly logic
+            // Here, you might parse the code and simulate assembling MIPS instructions
+            return `Assembled MIPS code:\n${code}`;
+        }
+
+        function displayInTerminal(output) {
+            const terminalOutput = document.getElementById('terminalOutput');
+            terminalOutput.value = output;
+        }
+
+        const runButton = document.querySelector('.toolbar button:nth-child(2)');
+        runButton.addEventListener('click', assembleMIPS);
+    </script>
+    </script>
+</body>
+</html>
